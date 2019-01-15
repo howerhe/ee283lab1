@@ -1,0 +1,133 @@
+---
+title: "Lab 1: the tidyverse"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+
+Firstly, load the library `tidyverse`.
+```{r message=FALSE}
+library(tidyverse)
+```
+
+
+
+## The tibbles Chapter
+### Create a small tibble manually
+```{r}
+tibble(x = 1, y = 2, z = runif(10))
+```
+
+
+### Exercise 1
+We can use a function called `is_tibble()`.
+```{r}
+is_tibble(mtcars)
+is_tibble(mpg)
+```
+
+
+### Exercise 2
+```{r}
+df <- data.frame(abc = 1, xyz = "a")
+df$x
+df[, "xyz"]
+df[, c("abc", "xyz")]
+tb <- tibble(abc = 1, xyz = "a")
+tb$x
+tb[, "xyz"]
+tb[, c("abc", "xyz")]
+```
+`data.frame` can let us just use the first few letters instead of the full name of a column with `$` while `tibble` needs the full name. It saves time somtimes but it will also lower legibility and may cause errors easily when there are other columns that have similar names.
+
+Another feature for `data.frame` is that when there is one column is called, it will return a vector not a dataframe. This may cause error when there are downstream processings that only accept dataframe.
+
+
+### Excersice 4
+```{r}
+annoying <- tibble(
+  `1` = 1:10,
+  `2` = `1` * 2 + rnorm(length(`1`))
+)
+select(annoying, `1`)
+ggplot(data = annoying, mapping = aes(x = `1`, y = `2`)) + geom_point()
+mutate(annoying, `3` = `2` / `1`)
+mutate(annoying, `3` = `2` / `1`) %>% rename(one = `1`, two = `2`, three = `3`)
+```
+
+
+### Exercise 5
+From the documentation: enframe() converts named atomic vectors or lists to one- or two-column data frames.
+
+
+### Exercise 6
+We can use `options(tibble.print_max = n, tibble.print_min = m)`.
+
+
+
+## The readr Chapter
+### Exercise 1
+We can use `read_delim(data, delim = "|")`.
+
+
+### Exercise 2
+From the documrntation we can find `col_names`, `col_types`, `locale`, `na`, `quoted_na`, `quote`, `trim_ws`, `n_max`, `guess_max`, `progress`, `skip_empty_rows`.
+
+
+### Exercise 4
+```{r}
+read_delim("x,y\n1,'a,b'", delim = ",", quote = "'")
+```
+
+
+### Exercise 5
+```{r}
+read_csv("a,b\n1,2,3\n4,5,6")
+```
+There are only two headers but there are three data colunms. `read_csv` truncates the last header.
+```{r}
+read_csv("a,b,c\n1,2\n1,2,3,4")
+```
+There are three headers. In the first row, there are two entries instead of three. And in the second row, there are four entries instead of three.`read_csv` uses the `NA` to represent the missing entry and throw the fourth entry of the second row away.
+```{r}
+read_csv("a,b\n\"1")
+```
+The first `"` can be parsed as a closing quote of the data, but `read_csv` corrects it. The second entry is missing and `read_csv` uses `NA`.
+```{r}
+read_csv("a,b\n1,2\na,b")
+```
+There's nothing wrong.
+```{r}
+read_csv("a;b\n1;3")
+```
+`read_csv` is not used to import semicolon seperated data. Use `read_csv2` instead.
+
+
+
+## The tidy chapter
+### Exercise 3
+Because, "cases" and "populations" are two different variables, we need to "spread" the "cases" and "population" into new columns.
+
+
+### Exercise 2
+The years are not quoted with backticks. `tidyr` may regard them as the index of columns not the names.
+
+
+
+## The "database-like stuff"" with dplyr chapter
+### Exercise 1
+```{r}
+library(nycflights13)
+mutate(flights, flight_key = row_number(flights$day))
+```
+
+
+### Exercise 2
+```{r}
+library(nycflights13)
+airports2 <- select(airports, faa, lat, lon)
+flights %>% left_join(airports2, c("origin" = "faa")) %>% rename("ori_lat" = "lat", "ori_lon" = "lon") %>% left_join(airports2, c("dest" = "faa")) %>% rename("dest_lat" = "lat", "dest_lon" = "lon")
+```
+The airports tibble is modified for better visualization.
